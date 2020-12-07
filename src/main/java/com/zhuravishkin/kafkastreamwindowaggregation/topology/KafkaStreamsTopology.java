@@ -11,10 +11,13 @@ import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Produced;
+import org.apache.kafka.streams.kstream.Suppressed;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
+
+import static org.apache.kafka.streams.kstream.Suppressed.BufferConfig.unbounded;
 
 @Slf4j
 @Component
@@ -32,11 +35,10 @@ public class KafkaStreamsTopology {
                             String outputTopicName) {
         kStreamBuilder
                 .stream(inputTopicName, Consumed.with(Serdes.String(), Serdes.String()))
-//                .mapValues((readOnlyKey, value) -> value)
                 .groupByKey()
-                .windowedBy(TimeWindows.of(Duration.ofMillis(30000)))
+                .windowedBy(TimeWindows.of(Duration.ofMillis(10000)).grace(Duration.ZERO))
                 .reduce((value1, value2) -> value2)
-//                .suppress(Suppressed.untilWindowCloses(unbounded()))
+                .suppress(Suppressed.untilWindowCloses(unbounded()))
                 .toStream()
                 .map((key, value) -> KeyValue.pair(key.key(), value))
                 .mapValues(this::getUserFromString)
