@@ -9,10 +9,8 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.kstream.Consumed;
-import org.apache.kafka.streams.kstream.Produced;
-import org.apache.kafka.streams.kstream.Suppressed;
-import org.apache.kafka.streams.kstream.TimeWindows;
+import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.state.Stores;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -37,8 +35,12 @@ public class KafkaStreamsTopology {
                 .stream(inputTopicName, Consumed.with(Serdes.String(), Serdes.String()))
                 .groupByKey()
                 .windowedBy(TimeWindows.of(Duration.ofMillis(10000)).grace(Duration.ZERO))
-                .reduce((value1, value2) -> value2)
-                .suppress(Suppressed.untilWindowCloses(unbounded()))
+                .reduce((value1, value2) -> value2, Materialized.as(Stores.inMemoryWindowStore(
+                        "kstream-reduce-state-store",
+                        Duration.ofMillis(600000),
+                        Duration.ofSeconds(10),
+                        false)))
+                .suppress(Suppressed.untilWindowCloses(unbounded()).withName("ktable-suppress-state"))
                 .toStream()
                 .map((key, value) -> KeyValue.pair(key.key(), value))
                 .mapValues(this::getUserFromString)
