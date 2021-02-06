@@ -18,6 +18,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -29,7 +31,7 @@ class KafkaStreamsTopologyTest {
     KafkaStreamsTopology kafkaStreamsTopology;
 
     @SpyBean
-    KafkaStreamsConfiguration kafkaStreamsConfiguration;
+    KafkaStreamsConfiguration kStreamsConfigs;
 
     @SpyBean
     StreamsBuilder streamsBuilder;
@@ -37,6 +39,9 @@ class KafkaStreamsTopologyTest {
     String event;
     String inputTopicName;
     String outputTopicName;
+    String windowStoreName;
+    String suppressedStoreName;
+
     TopologyTestDriver topologyTestDriver;
     TestInputTopic<String, String> inputTopic;
     TestOutputTopic<String, String> outputTopic;
@@ -46,13 +51,15 @@ class KafkaStreamsTopologyTest {
         event = Files.readString(Paths.get("src/test/resources/event.json"));
         inputTopicName = "src";
         outputTopicName = "out";
+        windowStoreName = "kstream-reduce";
+        suppressedStoreName = "ktable-suppress";
     }
 
     @BeforeEach
     void setUp() {
         topologyTestDriver = new TopologyTestDriver(
-                kafkaStreamsTopology.kStream(streamsBuilder, inputTopicName, outputTopicName),
-                kafkaStreamsConfiguration.asProperties()
+                kafkaStreamsTopology.kStream(streamsBuilder, inputTopicName, outputTopicName, windowStoreName, suppressedStoreName),
+                kStreamsConfigs.asProperties()
         );
         inputTopic = topologyTestDriver.createInputTopic(
                 inputTopicName,
@@ -73,7 +80,8 @@ class KafkaStreamsTopologyTest {
 
     @Test
     void topologyTest() {
-        inputTopic.pipeInput(event);
+        inputTopic.pipeInput("79336661111", event, LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli());
+        inputTopic.pipeInput("79336661111", event, LocalDateTime.now().plusSeconds(11).toInstant(ZoneOffset.UTC).toEpochMilli());
         log.warn(outputTopic.readValue());
         assertTrue(outputTopic.isEmpty());
     }

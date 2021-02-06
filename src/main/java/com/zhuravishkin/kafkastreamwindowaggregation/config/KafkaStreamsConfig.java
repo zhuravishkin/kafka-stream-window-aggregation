@@ -1,6 +1,5 @@
 package com.zhuravishkin.kafkastreamwindowaggregation.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zhuravishkin.kafkastreamwindowaggregation.model.User;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serde;
@@ -49,10 +48,5 @@ public class KafkaStreamsConfig {
     @Bean
     public Serde<User> userSerde() {
         return Serdes.serdeFrom(new JsonSerializer<>(), new JsonDeserializer<>(User.class));
-    }
-
-    @Bean
-    public ObjectMapper objectMapper() {
-        return new ObjectMapper();
     }
 }

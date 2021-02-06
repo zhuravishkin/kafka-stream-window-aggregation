@@ -30,17 +30,19 @@ public class KafkaStreamsTopology {
 
     public Topology kStream(StreamsBuilder kStreamBuilder,
                             String inputTopicName,
-                            String outputTopicName) {
+                            String outputTopicName,
+                            String windowStoreName,
+                            String suppressedStoreName) {
         kStreamBuilder
                 .stream(inputTopicName, Consumed.with(Serdes.String(), Serdes.String()))
                 .groupByKey()
-                .windowedBy(TimeWindows.of(Duration.ofMillis(10000)).grace(Duration.ZERO))
+                .windowedBy(TimeWindows.of(Duration.ofSeconds(10)).grace(Duration.ZERO))
                 .reduce((value1, value2) -> value2, Materialized.as(Stores.inMemoryWindowStore(
-                        "kstream-reduce-state-store",
+                        windowStoreName,
                         Duration.ofMillis(600000),
                         Duration.ofSeconds(10),
                         false)))
-                .suppress(Suppressed.untilWindowCloses(unbounded()).withName("ktable-suppress-state"))
+                .suppress(Suppressed.untilWindowCloses(unbounded()).withName(suppressedStoreName))
                 .toStream()
                 .map((key, value) -> KeyValue.pair(key.key(), value))
                 .mapValues(this::getUserFromString)

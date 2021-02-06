@@ -36,7 +36,9 @@ public class KafkaStreamsService {
         kafkaStreamsTopology.kStream(
                 streamsBuilder,
                 "src-topic",
-                "out-topic"
+                "out-topic",
+                "kstream-reduce-state-store",
+                "ktable-suppress-state"
         );
         KafkaStreams kafkaStreams = new KafkaStreams(
                 streamsBuilder.build(properties),
