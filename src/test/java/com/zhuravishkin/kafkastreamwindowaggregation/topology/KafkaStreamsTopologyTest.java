@@ -81,7 +81,8 @@ class KafkaStreamsTopologyTest {
     @Test
     void topologyTest() {
         inputTopic.pipeInput("79336661111", event, LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli());
-        inputTopic.pipeInput("79336661111", event, LocalDateTime.now().plusSeconds(11).toInstant(ZoneOffset.UTC).toEpochMilli());
+        inputTopic.pipeInput("79336661111", event, LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli());
+        inputTopic.pipeInput("79336661111", event, LocalDateTime.now().plusSeconds(10).toInstant(ZoneOffset.UTC).toEpochMilli());
         log.warn(outputTopic.readValue());
         assertTrue(outputTopic.isEmpty());
     }
