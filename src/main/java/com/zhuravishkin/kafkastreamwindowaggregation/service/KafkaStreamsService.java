@@ -3,12 +3,10 @@ package com.zhuravishkin.kafkastreamwindowaggregation.service;
 import com.zhuravishkin.kafkastreamwindowaggregation.topology.KafkaStreamsTopology;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.StreamsConfig;
 import org.springframework.kafka.config.KafkaStreamsConfiguration;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.util.Properties;
 
 @Service
 public class KafkaStreamsService {
@@ -26,13 +24,6 @@ public class KafkaStreamsService {
 
     @PostConstruct
     public void postConstructor() {
-        Properties properties = new Properties();
-        properties.put(StreamsConfig.TOPOLOGY_OPTIMIZATION, StreamsConfig.OPTIMIZE);
-        streamsStart(properties);
-
-    }
-
-    public void streamsStart(Properties properties) {
         kafkaStreamsTopology.kStream(
                 streamsBuilder,
                 "src-topic",
@@ -41,7 +32,7 @@ public class KafkaStreamsService {
                 "ktable-suppress-state"
         );
         KafkaStreams kafkaStreams = new KafkaStreams(
-                streamsBuilder.build(properties),
+                streamsBuilder.build(),
                 kStreamsConfigs.asProperties()
         );
         kafkaStreams.start();

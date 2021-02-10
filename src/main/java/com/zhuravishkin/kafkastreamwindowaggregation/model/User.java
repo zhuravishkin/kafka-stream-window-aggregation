@@ -3,9 +3,11 @@ package com.zhuravishkin.kafkastreamwindowaggregation.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
+@ToString
 public class User {
     @JsonProperty("phone_number")
     private String phoneNumber;
