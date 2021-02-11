@@ -10,7 +10,6 @@ import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.state.Stores;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -35,17 +34,17 @@ public class KafkaStreamsTopology {
                             String suppressedStoreName) {
         kStreamBuilder
                 .stream(inputTopicName, Consumed.with(Serdes.String(), Serdes.String()))
-                .groupByKey()
-                .windowedBy(TimeWindows.of(Duration.ofSeconds(10)).grace(Duration.ZERO))
-                .reduce((value1, value2) -> value2, Materialized.as(Stores.inMemoryWindowStore(
-                        windowStoreName,
-                        Duration.ofMillis(600000),
-                        Duration.ofSeconds(10),
-                        false)))
+                .mapValues(this::getUserFromString)
+                .groupByKey(Grouped.with(Serdes.String(), userSerde))
+                .windowedBy(TimeWindows.of(Duration.ofSeconds(5)).grace(Duration.ZERO))
+                .aggregate(User::new, (key, value, aggregate) -> (new User(value.getPhoneNumber(),
+                        value.getFirstName(),
+                        value.getSurName(),
+                        value.getUri() + "," + aggregate.getUri(),
+                        value.getEventTime())), Materialized.with(Serdes.String(), userSerde))
                 .suppress(Suppressed.untilWindowCloses(unbounded()).withName(suppressedStoreName))
                 .toStream()
                 .map((key, value) -> KeyValue.pair(key.key(), value))
-                .mapValues(this::getUserFromString)
                 .to(outputTopicName, Produced.with(Serdes.String(), userSerde));
         return kStreamBuilder.build();
     }
